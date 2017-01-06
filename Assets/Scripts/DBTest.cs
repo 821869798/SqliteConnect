@@ -10,6 +10,7 @@ public class DBTest : MonoBehaviour {
 	public Text text;
 	string path;
 	string dbpath;
+	public Button btn;
 	// Use this for initialization
 	void Start () {
 		//测试文件拷贝
@@ -21,38 +22,38 @@ public class DBTest : MonoBehaviour {
 		dbpath = Application.persistentDataPath + "/mydb.db";
 		TextAsset dbText = Resources.Load<TextAsset> ("mydb");
 		File.WriteAllBytes (dbpath, dbText.bytes);
+
+		//添加事件
+		btn.onClick.AddListener (DBConnect);
 	}
-	
-	void OnGUI()
+
+	void DBConnect()
 	{
-		if(GUILayout.Button("测试数据库"))
+		//测试文件读取
+		StreamReader sr = new StreamReader (path);
+		string str = sr.ReadToEnd ();
+		Debug.Log (str);
+		//数据库连接
+		string url = "URI=file:" + dbpath;
+		try
 		{
-			//测试文件读取
-			StreamReader sr = new StreamReader (path);
-			string str = sr.ReadToEnd ();
-			Debug.Log (str);
-			//数据库连接
-			string url = "URI=file:" + dbpath;
-			try
+			conn = new SqliteConnection (url);
+			conn.Open ();
+			SqliteCommand cmd = new SqliteCommand (conn);
+			cmd.CommandText = "select * from usr;";
+			SqliteDataReader reader = cmd.ExecuteReader ();
+			while(reader.Read())
 			{
-				conn = new SqliteConnection (url);
-				conn.Open ();
-				SqliteCommand cmd = new SqliteCommand (conn);
-				cmd.CommandText = "select * from usr;";
-				SqliteDataReader reader = cmd.ExecuteReader ();
-				while(reader.Read())
-				{
-					text.text += reader.GetString(0) +" "+reader.GetString(1) +"\n";
-				}
-				reader.Close();
+				text.text += reader.GetString(0) +" "+reader.GetString(1) +"\n";
 			}
-			catch (Exception e)
-			{
-				text.text = e.ToString();
-			}
-			finally{
-				conn.Close ();
-			}
+			reader.Close();
+		}
+		catch (Exception e)
+		{
+			text.text = e.ToString();
+		}
+		finally{
+			conn.Close ();
 		}
 	}
 }
