@@ -13,14 +13,15 @@ public class DBTest : MonoBehaviour {
 	public Button btn;
 	// Use this for initialization
 	void Start () {
-		//测试文件拷贝
-		path  = Application.persistentDataPath + "/test.txt";
-		TextAsset text = Resources.Load<TextAsset> ("test");
-		File.WriteAllBytes (path, text.bytes);
 
-		//拷贝数据库到沙盒区
-		dbpath = Application.persistentDataPath + "/mydb.db";
+        //拷贝数据库到沙盒区
+        dbpath = FilePathHelper.Instance.GetPersistentDataPath("mydb.sqlite");
 		TextAsset dbText = Resources.Load<TextAsset> ("mydb");
+        string dir = Path.GetDirectoryName(dbpath);
+        if(!Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
 		File.WriteAllBytes (dbpath, dbText.bytes);
 
 		//添加事件
@@ -29,10 +30,6 @@ public class DBTest : MonoBehaviour {
 
 	void DBConnect()
 	{
-		//测试文件读取
-		StreamReader sr = new StreamReader (path);
-		string str = sr.ReadToEnd ();
-		Debug.Log (str);
 		//数据库连接
 		string url = "URI=file:" + dbpath;
 		try
@@ -47,7 +44,8 @@ public class DBTest : MonoBehaviour {
 				text.text += reader.GetString(0) +" "+reader.GetString(1) +"\n";
 			}
 			reader.Close();
-		}
+            cmd.Dispose();
+        }
 		catch (Exception e)
 		{
 			text.text = e.ToString();
@@ -56,4 +54,11 @@ public class DBTest : MonoBehaviour {
 			conn.Close ();
 		}
 	}
+
+    private void OnApplicationQuit()
+    {
+        if (conn == null) return;
+        conn.Close();
+        conn.Dispose();
+    }
 }
